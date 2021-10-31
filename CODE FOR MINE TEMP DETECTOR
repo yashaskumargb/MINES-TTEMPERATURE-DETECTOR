@@ -1,0 +1,112 @@
+#include<LiquidCrystal.h>
+LiquidCrystal lcd(13,12, 11, 10, 9, 8);
+//pin name declaration
+int sensor_pin=A0;
+int green_ind=3;   // for <=30 degree Celsius,green led
+int blue_ind=4;   // for >30 & <=40 degree Celsius,blue led
+int red_ind=5;   // for >40 & <=50 degree Celsius,red led
+int cooling_unit=6;//cooling fan switch  temp >=40
+int alert_sound=7;// alert sound switch  
+float temp;
+float temp_calc(float num);//temcp calcultor function
+
+void setup()
+{ 
+  pinMode(sensor_pin,INPUT);// data from sensor to uno
+  pinMode(green_ind,OUTPUT);//<=30 deg cel
+  pinMode(blue_ind,OUTPUT);//>30 and <=40 deg cel
+  pinMode(red_ind,OUTPUT);// >40 and <=50 deg cel
+  pinMode(cooling_unit,OUTPUT);// fans for temp >40 deg
+  pinMode(alert_sound,OUTPUT);// for on of alert sound to indicate temp >50 deg
+  Serial.begin(9600);//setting up baud rate
+  Serial.print("welcome to mines \n");  
+  lcd.begin(16,2);
+  
+}
+
+void loop()
+{ lcd.setCursor(0, 0);
+  float temp_data=analogRead(sensor_pin);
+  temp=temp_calc(temp_data);
+  Serial.print("current temp :");
+  Serial.print(temp);
+  Serial.println(" deg C");
+  Serial.print("MESSAGE  :");
+  if((temp>=0)&&(temp<=30))
+  {
+    Serial.println(" normal temperature ");
+    digitalWrite(green_ind,HIGH);
+    digitalWrite(blue_ind,LOW);
+    digitalWrite(red_ind,LOW);
+    digitalWrite(cooling_unit,LOW);
+    digitalWrite(alert_sound,LOW);
+    lcd.clear();
+    lcd.print("normal");
+    lcd.setCursor(0,1);
+    lcd.print(" temperature");
+  }
+  else if((temp>30)&&(temp<=40))
+  {
+    Serial.println(" attention  rise in temp temperature lies between 30 and 40");
+    digitalWrite(green_ind,LOW);
+    digitalWrite(blue_ind,HIGH);
+    digitalWrite(red_ind,LOW);
+    digitalWrite(cooling_unit,LOW);
+    digitalWrite(alert_sound,LOW);
+    lcd.clear();
+    lcd.print("current temp:");
+    lcd.setCursor(0,1);
+    lcd.print("30 and 40"); 
+  }
+  else if((temp>40)&&(temp<=50))
+  {
+    Serial.println(" attention  rise in temp \n temperature lies between 40 and 50 ");
+    digitalWrite(green_ind,LOW);
+    digitalWrite(blue_ind,LOW);
+    digitalWrite(red_ind,HIGH);
+    digitalWrite(cooling_unit,HIGH);
+    digitalWrite(alert_sound,LOW);
+    lcd.clear();
+    lcd.print("current temp:");
+    lcd.setCursor(0,1);
+    lcd.print("40 and 50"); 
+
+  }
+  else if((temp>0)&&(temp>50))
+  {
+    Serial.println(" attention workers leave the mine ASAP \n temperature is more than 50C ");
+    digitalWrite(green_ind,LOW);
+    digitalWrite(blue_ind,LOW);
+    digitalWrite(red_ind,LOW);
+    digitalWrite(cooling_unit,LOW);
+    digitalWrite(alert_sound,HIGH);
+    lcd.clear();
+    lcd.print("attention"); 
+    lcd.setCursor(0,1); 
+    lcd.print("leave the mine");
+
+
+  }
+ else
+ {  Serial.println(" MINE IS CLOSED");
+    digitalWrite(green_ind,LOW);
+    digitalWrite(blue_ind,LOW);
+    digitalWrite(red_ind,LOW);
+    digitalWrite(cooling_unit,LOW);
+    digitalWrite(alert_sound,LOW);
+    lcd.clear();
+    lcd.print("mine closed");
+    lcd.setCursor(0,1); 
+    lcd.print("Thank you   ");
+   
+ }
+  
+  
+}
+float temp_calc(float num)
+{ float vtg, temp_in_c;
+  vtg=((num/1024)*5);
+  temp_in_c=(vtg-0.5)*100;//this equation is taken from following website
+  //https://bc-robotics.com/tutorials/using-a-tmp36-temperature-sensor-with-arduino/ 
+  return temp_in_c;
+}
